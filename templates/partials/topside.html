@@ -1,0 +1,142 @@
+
+{% load humanize %}
+
+
+
+
+<div class="row">
+    <div class="col-md-4 mt-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-bell"></i> Notifications
+            </div>
+            <div class="card-body">
+                <div class="notification-scroll">
+                    {% if pending_leaves %}
+                        {% for leave in pending_leaves %}
+                            <div class="alert alert-info">
+                                New leave request from {{ leave.user.username }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if pending_loans %}
+                        {% for loan in pending_loans %}
+                            <div class="alert alert-warning">
+                                New loan request from {{ loan.user.username }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if not pending_leaves and not pending_loans %}
+                        <p>No new notifications</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8 mt-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white"> 
+                <i class="fas fa-chart-bar"></i> Dashboard Statistics
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a class="text-decoration-none text-dark" href="{% url 'dashboard-customers' %}">
+                            <div class="card my-card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h4>Users <i class="fas fa-users"></i></h4>
+                                    <h3>{{ customer_count }}</h3>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-md-3">
+                        <a class="text-decoration-none text-dark" href="{% url 'dashboard-products' %}">
+                            <div class="card my-card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h4>Jobs <i class="fas fa-box"></i></h4>
+                                    <h3>{{ product_count }}</h3>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-md-3">
+                        <a class="text-decoration-none text-dark" href="{% url 'manage-leaves' %}">
+                            <div class="card my-card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h4>All Leaves <i class="fas fa-calendar"></i></h4>
+                                    <h3>{{ staff_count }}</h3>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-md-3">
+                        <a class="text-decoration-none text-dark" href="{% url 'loan-list' %}">
+                            <div class="card my-card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h4>Pending Loans <i class="fas fa-file-invoice-dollar"></i></h4>
+                                    <h3>{{ pending_loans_count }}</h3>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <a class="text-decoration-none text-dark" href="{% url 'staff-dashboard' %}">
+                            <div class="card my-card shadow-sm">
+                                <div class="card-body text-center">
+                                    <h4>Staff Leave View <i class="fas fa-user-tie"></i></h4>
+                                    {% comment %} <h3>{{ staff_count }}</h3> {% endcomment %}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <canvas id="monthlyStatsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+}
+.my-card {
+    transition: transform 0.3s;
+}
+.my-card:hover {
+    transform: translateY(-5px);
+}
+</style>
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('monthlyStatsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Job Orders',
+                data: [12, 19, 3, 5, 2, 3],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        }
+    });
+</script>
+{% endblock %}

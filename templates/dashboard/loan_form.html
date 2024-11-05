@@ -1,0 +1,220 @@
+{% extends 'dashboard/loan_base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block custom_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+<style>
+    .loan-form-card {
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 8px;
+    }
+
+    .loan-form-card .card-header {
+        background: linear-gradient(45deg, #17a2b8, #138496);
+        padding: 1.5rem;
+        border-bottom: none;
+    }
+
+    .loan-form-card .card-header h3 {
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .loan-form-card .card-body {
+        padding: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+        height: calc(2.5rem + 2px);
+        padding: 0.5rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+    }
+
+    textarea.form-control {
+        height: auto;
+        min-height: 120px;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #ddd;
+    }
+
+    .btn {
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+    .btn-primary:hover {
+        background-color: #138496;
+        border-color: #117a8b;
+    }
+
+    .datepicker {
+        padding: 0.75rem;
+        border-radius: 4px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .asteriskField {
+        color: #dc3545;
+        margin-left: 2px;
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block loan_content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card loan-form-card">
+            <div class="card-header bg-info text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-file-invoice"></i>
+                    {% if form.instance.pk %}Update{% else %}New{% endif %} Loan Application
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="loanForm" novalidate>
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.loan_type|as_crispy_field }}
+                            {{ form.amount|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.start_date|as_crispy_field }}
+                            {{ form.end_date|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            {{ form.reason|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            {% if form.instance.pk %}Update{% else %}Submit{% endif %} Application
+                        </button>
+                        <a href="{% url 'my-loans' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize date pickers
+    $('.dateinput').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        startDate: '0d',
+        clearBtn: true,
+        orientation: 'bottom auto'
+    });
+
+    // Form validation
+    $('#loanForm').on('submit', function(e) {
+        const amount = parseFloat($('#id_amount').val());
+        const startDate = new Date($('#id_start_date').val());
+        const endDate = new Date($('#id_end_date').val());
+        const reason = $('#id_reason').val().trim();
+        let isValid = true;
+        
+        // Clear previous error messages
+        $('.invalid-feedback').remove();
+        $('.is-invalid').removeClass('is-invalid');
+
+        // Amount validation
+        if (!amount || amount <= 0) {
+            isValid = false;
+            $('#id_amount').addClass('is-invalid');
+            $('#id_amount').after('<div class="invalid-feedback">Please enter a valid amount greater than 0</div>');
+        }
+
+        // Date validation
+        if (endDate <= startDate) {
+            isValid = false;
+            $('#id_end_date').addClass('is-invalid');
+            $('#id_end_date').after('<div class="invalid-feedback">End date must be after start date</div>');
+        }
+
+        // Reason validation
+        if (reason.length < 10) {
+            isValid = false;
+            $('#id_reason').addClass('is-invalid');
+            $('#id_reason').after('<div class="invalid-feedback">Please provide a detailed reason (minimum 10 characters)</div>');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Validation Error',
+                text: 'Please check the form for errors',
+                icon: 'error',
+                confirmButtonColor: '#17a2b8'
+            });
+            return false;
+        }
+
+        // Show loading state
+        const submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.prop('disabled', true);
+        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+    });
+
+    // Amount formatting
+    $('#id_amount').on('input', function() {
+        let value = $(this).val().replace(/[^\d.]/g, '');
+        if (value) {
+            value = parseFloat(value).toFixed(2);
+            $(this).val(value);
+        }
+    });
+});
+</script>
+{% endblock %}

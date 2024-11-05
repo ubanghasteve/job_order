@@ -1,0 +1,266 @@
+{% extends 'dashboard/loan_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block custom_css %}
+<style>
+    .loan-detail-card {
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 8px;
+    }
+
+    .loan-detail-card .card-header {
+        background: linear-gradient(45deg, #17a2b8, #138496);
+        padding: 1.5rem;
+        border-bottom: none;
+    }
+
+    .loan-detail-card .card-header h3 {
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .info-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .info-group label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-group p {
+        font-size: 1rem;
+        color: #212529;
+        margin-bottom: 0;
+    }
+
+    .badge-lg {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-radius: 4px;
+    }
+
+    .reason-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 1.25rem;
+        margin-top: 0.5rem;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .amount-display {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0056b3;
+    }
+
+    .status-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block loan_content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card loan-detail-card">
+            <!-- Card Header -->
+            <div class="card-header bg-info text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    Loan Application #{{ loan.id }}
+                </h3>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body">
+                <!-- Loan Details -->
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Applicant</label>
+                            <p>{{ loan.user.get_full_name|default:loan.user.username }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label>Department</label>
+                            <p>{{ loan.user.profile.department|default:"N/A" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label>Loan Type</label>
+                            <p>{{ loan.get_loan_type_display }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label>Amount Requested</label>
+                            <p class="amount-display">₦{{ loan.amount|floatformat:2|intcomma }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Status</label>
+                            <p>
+                                <span class="status-badge badge badge-{% if loan.status == 'Pending' %}warning
+                                                     {% elif loan.status == 'Approved' %}success
+                                                     {% else %}danger{% endif %}">
+                                    {{ loan.status }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="info-group">
+                            <label>Applied Date</label>
+                            <p>{{ loan.applied_date|date:"d-m-Y H:i" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label>Start Date</label>
+                            <p>{{ loan.start_date|date:"d-m-Y" }}</p>
+                        </div>
+                        <div class="info-group">
+                            <label>End Date</label>
+                            <p>{{ loan.end_date|date:"d-m-Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Reason Section -->
+                <div class="info-group mt-4">
+                    <label>Reason for Loan</label>
+                    <div class="reason-box">
+                        {{ loan.reason|linebreaks }}
+                    </div>
+                </div>
+
+                <!-- Response Message Display for Regular Users -->
+                {% if not request.user.is_superuser and 'Finance' not in request.user.groups.all|stringformat:'s' %}
+                    {% if loan.response_message %}
+                    <div class="info-group mt-4">
+                        <label>Admin Response</label>
+                        <div class="response-box">
+                            {{ loan.response_message|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="form-group mt-4">
+                        <a href="{% url 'loan-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- Response Form for Admins -->
+                {% if request.user.is_superuser or 'Finance' in request.user.groups.all|stringformat:'s' %}
+                <form method="POST" class="mt-4" id="loanResponseForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Update Status</label>
+                        <select name="status" class="form-control" required>
+                            <option value="Pending" {% if loan.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Approved" {% if loan.status == 'Approved' %}selected{% endif %}>Approved</option>
+                            <option value="Rejected" {% if loan.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Response Message</label>
+                        <textarea name="response_message" class="form-control" rows="4">{{ loan.response_message }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Status
+                        </button>
+                        <a href="{% url 'loan-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </form>
+                {% endif %}
+                </div>
+                </div>
+                </div>
+                </div>
+            {% endblock %}
+
+
+
+
+{% block custom_js %}
+<script>
+$(document).ready(function() {
+    // Format amount display
+    const amountDisplay = $('.amount-display');
+    const amount = parseFloat(amountDisplay.text());
+    amountDisplay.text(new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount));
+
+    // Form submission handling
+    $('#loanResponseForm').on('submit', function(e) {
+        e.preventDefault();
+        const status = $('select[name="status"]').val();
+        const message = $('textarea[name="response_message"]').val();
+
+        if (status === 'Rejected' && !message.trim()) {
+            Swal.fire({
+                title: 'Response Required',
+                text: 'Please provide a reason for rejection',
+                icon: 'warning',
+                confirmButtonColor: '#17a2b8'
+            });
+            return false;
+        }
+
+        Swal.fire({
+            title: 'Confirm Update',
+            text: `Are you sure you want to mark this loan as ${status.toLowerCase()}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#17a2b8',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, update it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        });
+    });
+
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

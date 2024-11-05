@@ -1,0 +1,51 @@
+{% extends 'partials/base.html' %}
+{% block title %}Order Page{% endblock %}
+
+{% block content %}
+{% include 'partials/topside.html' %}
+<div class="row my-4">
+    <div class="col-md-4"></div>
+    <div class="col-md-8">
+        <a class="btn btn-primary" href="{% url 'export-orders-pdf' %}">Export to PDF</a>
+        <table class="table bg-white table-bordered">
+            <thead class="bg-info text-white">
+                <tr>
+                    <th scope="col">S/N</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Job Order Number</th>
+                    <th scope="col">Organization</th>
+                    <th scope="col">Print Product</th>
+                    <th scope="col">Order Quantity (kg)</th>
+                    <th scope="col">Total Price(₦)</th>
+                    <th scope="col">Estimated Delivery</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Ordered by</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for order in order %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.date_created|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ order.product.job_order }}</td>
+                    <td>{{ order.product.organization_name }}</td>
+                    <td>{{ order.product.print_product }}</td>
+                    <td>{{ order.order_quantity }}</td>
+                    <td>{{ order.total_price }}</td>
+                    <td>{{ order.estimated_delivery_date|date:"Y-m-d" }}</td>
+                    <td>{{ order.order_status }}</td>
+                    <td>{{ order.customer.username }}</td>
+                    <td>
+                        <a href="{% url 'order-edit' order.id %}" class="btn btn-sm btn-info">Edit</a>
+                        <a href="{% url 'order-delete' order.id %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

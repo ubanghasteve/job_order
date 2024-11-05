@@ -1,0 +1,107 @@
+<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #1E9AB0;">
+    <div class="container">
+        {% if user.is_authenticated %}
+        <a class="navbar-brand text-white" href="{% url 'dashboard-index' %}">Steve Record</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link text-white" href="{% url 'dashboard-index' %}">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </li>
+
+                {% if request.user.is_superuser or 'Admin' in request.user.groups.all|stringformat:'s' %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="adminDropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-cogs"></i> Admin Controls
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="adminDropdown">
+                        <a class="dropdown-item" href="{% url 'manage-leaves' %}">
+                            <i class="fas fa-tasks"></i> Manage Leaves
+                        </a>
+                        <a class="dropdown-item" href="{% url 'admin_leave_dashboard' %}">
+                            <i class="fas fa-chart-bar"></i> Leave Dashboard
+                        </a>
+                    </div>
+                </li>
+                {% endif %}
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="leaveDropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-calendar-alt"></i> Leave Management
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="leaveDropdown">
+                        <a class="dropdown-item" href="{% url 'apply-leave' %}">
+                            <i class="fas fa-plus"></i> Apply Leave
+                        </a>
+                        <a class="dropdown-item" href="{% url 'leave-history' %}">
+                            <i class="fas fa-history"></i> Leave History
+                        </a>
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="loanDropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-file-invoice-dollar"></i> Loan Management
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="loanDropdown">
+                        <a class="dropdown-item" href="{% url 'loan-request' %}">
+                            <i class="fas fa-file-invoice"></i> Request Loan
+                        </a>
+                        <a class="dropdown-item" href="{% url 'my-loans' %}">
+                            <i class="fas fa-folder-open"></i> My Loans
+                        </a>
+                      {% if request.user.is_superuser or 'Finance' in request.user.groups.all|stringformat:'s' %}
+                        <a class="dropdown-item" href="{% url 'loan-list' %}">
+                            <i class="fas fa-list"></i> All Loans
+                        </a>
+                        <a class="dropdown-item" href="{% url 'pending-loans' %}">
+                            <i class="fas fa-clock"></i> Pending Loans
+                        </a>
+                        {% endif %}
+                    </div>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i> {{ user.username }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="{% url 'user-profile' %}">
+                            <i class="fas fa-id-card"></i> Profile
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'user-logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        {% else %}
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'user-register' %}">
+                        <i class="fas fa-user-plus"></i> Register
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'user-login' %}">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+        </div>
+    </div>
+</nav>

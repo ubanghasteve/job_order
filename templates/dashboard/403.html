@@ -1,0 +1,16 @@
+{% extends 'partials/base.html' %}
+
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-body text-center">
+            <h1 class="display-4 text-danger">403</h1>
+            <h2 class="mb-4">Access Denied</h2>
+            <p class="lead">{{ message }}</p>
+            <a href="{% url return_url %}" class="btn btn-primary">{{ return_text }}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

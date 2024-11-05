@@ -1,0 +1,281 @@
+{% extends 'dashboard/loan_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block custom_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
+<style>
+    .loan-list-card {
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 8px;
+    }
+
+    .loan-list-card .card-header {
+        background: linear-gradient(45deg, #17a2b8, #138496);
+        padding: 1.25rem;
+    }
+
+    .loan-list-card .card-header h3 {
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    .new-loan-btn {
+        background-color: #ffffff;
+        color: #17a2b8;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .new-loan-btn:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        border-bottom: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        padding: 1rem;
+    }
+
+    .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .badge {
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+        font-size: 0.75rem;
+        border-radius: 4px;
+    }
+
+    .btn-group .btn {
+        padding: 0.375rem 0.75rem;
+        margin: 0 2px;
+        border-radius: 4px;
+    }
+
+    .btn-group .btn i {
+        font-size: 0.875rem;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        min-width: 80px;
+        padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        min-width: 250px;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .amount-column {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    .status-badge {
+        min-width: 85px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block loan_content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card loan-list-card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><i class="fas fa-list-ul mr-2"></i>Loan Applications</h3>
+                <a href="{% url 'loan-request' %}" class="btn new-loan-btn">
+                    <i class="fas fa-plus mr-2"></i>New Application
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="loansTable" class="table table-bordered table-hover">
+                        <thead class="bg-info text-white">
+                            <tr>
+                                <th>S/N</th>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Loan Type</th>
+                                <th class="amount-column">Amount</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+
+
+
+
+
+
+                        <tbody>
+                            {% for loan in loans %}
+                            <tr data-loan-id="{{ loan.id }}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>#{{ loan.id }}</td>
+                                <td>{{ loan.user.get_full_name|default:loan.user.username }}</td>
+                                <td>{{ loan.get_loan_type_display }}</td>
+                                <td class="amount-column">₦{{ loan.amount|floatformat:2|intcomma }}</td>
+                                <td>
+                                    <span class="badge status-badge badge-{% if loan.status == 'Pending' %}warning
+                                                        {% elif loan.status == 'Approved' %}success
+                                                        {% else %}danger{% endif %}">
+                                        {{ loan.get_status_display }}
+                                    </span>
+                                    {% if loan.status == 'Rejected' and loan.denial_reason %}
+                                    <div class="small text-danger mt-1">
+                                        Reason: {{ loan.denial_reason }}
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td data-sort="{{ loan.applied_date|date:'Y-m-d' }}">
+                                    {{ loan.applied_date|date:"d-m-Y" }}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        {% if request.user == loan.user or request.user.is_superuser or 'Finance' in request.user.groups.all|stringformat:'s' %}
+                                        <a href="{% url 'loan-detail' loan.id %}"
+                                        class="btn btn-info btn-sm"
+                                        data-toggle="tooltip"
+                                        {% if loan.status == 'Rejected' %}
+                                        data-original-title="Denial Reason: {{ loan.denial_reason }}"
+                                        {% endif %}
+                                        title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if request.user.is_superuser or 'Finance' in request.user.groups.all|stringformat:'s' %}
+                                        <a href="{% url 'loan-update' loan.id %}"
+                                        class="btn btn-warning btn-sm"
+                                        data-toggle="tooltip"
+                                        title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'loan-delete' loan.id %}"
+                                        class="btn btn-danger btn-sm delete-loan"
+                                        data-toggle="tooltip"
+                                        title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                </table>
+
+
+
+
+
+
+
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script>
+$(document).ready(function() {
+    const loanTable = $('#loansTable').DataTable({
+        responsive: true,
+        order: [[5, "asc"]],
+        pageLength: 25,
+        language: {
+            search: "Search loans:",
+            lengthMenu: "Show _MENU_ entries per page",
+        },
+        columnDefs: [{
+            targets: 3,
+            render: function(data, type, row) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(data);
+            }
+        }]
+    });
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+    function refreshLoanStatus() {
+        $.ajax({
+            url: '{% url "loan-status-check" %}',
+            method: 'GET',
+            success: function(data) {
+                data.loans.forEach(function(loan) {
+                    const row = $(`tr[data-loan-id="${loan.id}"]`);
+                    const statusBadge = row.find('.status-badge');
+                    
+                    statusBadge
+                        .removeClass('badge-warning badge-success badge-danger')
+                        .addClass(`badge-${loan.status.toLowerCase()}`)
+                        .text(loan.status);
+                    
+                    if (loan.status === 'Approved' || loan.status === 'Rejected') {
+                        row.find('.btn-warning').hide();
+                    }
+                });
+            }
+        });
+    }
+
+    setInterval(refreshLoanStatus, 30000);
+
+    $('.delete-loan').on('click', function(e) {
+        e.preventDefault();
+        const deleteUrl = $(this).attr('href');
+        
+        Swal.fire({
+            title: 'Delete Loan Application?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = deleteUrl;
+            }
+        });
+    });
+
+    $('#loansTable tbody tr').on('click', function(e) {
+        if (!$(e.target).closest('a').length) {
+            const detailUrl = $(this).find('a.btn-info').attr('href');
+            window.location.href = detailUrl;
+        }
+    });
+});
+</script>
+{% endblock %}

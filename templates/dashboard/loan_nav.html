@@ -1,0 +1,130 @@
+<nav class="navbar navbar-expand-lg navbar-light mb-4">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#loanNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="loanNavbar">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'loan-request' %}active{% endif %}"
+                       href="{% url 'loan-request' %}">
+                       <i class="fas fa-file-invoice mr-1"></i> Request Loan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'my-loans' %}active{% endif %}"
+                       href="{% url 'my-loans' %}">
+                       <i class="fas fa-folder-open mr-1"></i> My Loans
+                    </a>
+                </li>
+                {% if request.user.is_superuser or 'Finance' in request.user.groups.all|stringformat:'s' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'loan-list' %}active{% endif %}"
+                       href="{% url 'loan-list' %}">
+                       <i class="fas fa-list mr-1"></i> All Loans
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'pending-loans' %}active{% endif %}"
+                       href="{% url 'pending-loans' %}">
+                       <i class="fas fa-clock mr-1"></i> Pending Loans
+                       <span class="badge badge-warning pending-count"></span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+.navbar {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 0.75rem 1rem;
+}
+
+.navbar-nav .nav-item {
+    margin-right: 0.5rem;
+}
+
+.nav-link {
+    color: #495057;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background-color: #e9ecef;
+    color: #17a2b8;
+}
+
+.nav-link.active {
+    background-color: #17a2b8;
+    color: #ffffff;
+}
+
+.nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+.pending-count {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+
+@media (max-width: 991.98px) {
+    .navbar-nav .nav-item {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 1rem;
+    }
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    // Update pending loans count
+    function updatePendingCount() {
+        $.get('/api/pending-loans-count/', function(data) {
+            const pendingCount = data.count;
+            const badge = $('.pending-count');
+            
+            if (pendingCount > 0) {
+                badge.text(pendingCount);
+                badge.show();
+            } else {
+                badge.hide();
+            }
+        });
+    }
+
+    // Initial count update
+    updatePendingCount();
+
+    // Update count every 5 minutes
+    setInterval(updatePendingCount, 300000);
+
+    // Active link highlighting
+    $('.nav-link').each(function() {
+        if ($(this).hasClass('active')) {
+            $(this).closest('.nav-item').addClass('active');
+        }
+    });
+
+    // Mobile menu handling
+    $('.navbar-toggler').on('click', function() {
+        $(this).toggleClass('active');
+    });
+});
+</script>

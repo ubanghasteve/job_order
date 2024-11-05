@@ -1,0 +1,52 @@
+{% extends 'partials/base.html' %}
+{% block title %}Product Detail{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row my-4">
+    <div class="col-md-6 offset-md-3 p-3 bg-white">
+        <h3>Update Product: {{ product.name }}</h3>
+        <hr>
+        
+        <!-- Current Image Preview -->
+        {% if product.image %}
+        <div class="mb-3">
+            <label>Current Image:</label>
+            <img src="{{ product.image.url }}" alt="Current Product Image" class="img-fluid mb-2" style="max-height: 200px;">
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            
+            <!-- Image Preview for New Upload -->
+            <div id="imagePreview" class="mb-3" style="display: none;">
+                <label>New Image Preview:</label>
+                <img id="preview" src="#" alt="New Image Preview" class="img-fluid" style="max-height: 200px;">
+            </div>
+
+            <div class="mt-3">
+                <input class="btn btn-primary" type="submit" value="Update Product">
+                <a href="{% url 'dashboard-products' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image preview functionality
+    document.getElementById('id_image').onchange = function(evt) {
+        const preview = document.getElementById('preview');
+        const previewDiv = document.getElementById('imagePreview');
+        const [file] = this.files;
+
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            previewDiv.style.display = 'block';
+        }
+    };
+</script>
+{% endblock %}

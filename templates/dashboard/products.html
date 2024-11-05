@@ -1,0 +1,377 @@
+{% extends 'partials/base.html' %}
+{% block title %}Products Page{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+{% include 'partials/topside.html' %}
+
+
+<div class="row my-4">
+    <div class="col-md-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card card-body">
+            <h5>Raise Job Order</h5>
+            <hr>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input class="btn btn-success btn-block" type="submit" value="Add">
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card card-body mb-3">
+            <form method="GET" class="form-inline">
+                <div class="row w-100">
+                    <div class="col-md-4">
+                        <input type="text" name="search" class="form-control w-100" placeholder="Search Job Order Number, organization..." value="{{ request.GET.search }}">
+                    </div>
+                    <div class="col-md-4">
+                        <select name="status" class="form-control w-100">
+                            <option value="">All Status</option>
+                            <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="approve" {% if request.GET.status == 'approve' %}selected{% endif %}>Approved</option>
+                            <option value="deny" {% if request.GET.status == 'deny' %}selected{% endif %}>Denied</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        <a href="{% url 'dashboard-products' %}" class="btn btn-secondary ml-2">Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="d-flex justify-content-end mb-3">
+            <a class="btn btn-primary" href="{% url 'export-products-pdf' %}">Export to PDF</a>
+        </div>
+
+
+        <div class="table-responsive">
+            <table class="table bg-white table-bordered" style="min-width: 1500px;">
+                <thead class="bg-info text-white sticky-top">
+                    <tr>
+                        <th>S/N</th>
+                        <th>Date</th>
+                        <th>Job Order Number</th>
+                        <th>Image</th>
+                        <th>Job Name</th>
+                        <th>Address</th>
+                        <th>Contact</th>
+                        <th>Package type/ Product</th>
+                        <th>No: of Colors / Color Names</th>
+                        <th>Cutting / Pouching</th>
+                        <th>Thickness / Width</th>
+                        <th>Sealing Type</th>
+                        <th>Delivery qty</th>
+                        <th>Price(₦)</th>
+                        <th>Order Quantity (kg)</th>
+                        <th>Total(₦)</th>
+                        <th>Est. Delivery</th>
+                        <th>Act. Delivery</th>
+                        <th>Cycle Time</th>
+                        <th>Submission ID</th>
+                        <th>Approval Status</th>
+                        <th>Created By</th>
+                        <th>Approved By</th>
+                        <th>Production Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+
+                <tbody>
+                    {% for product in products %}
+                    <tr class="clickable-row" data-href="{% url 'dashboard-products-detail' product.id %}">
+                        <td>{{ products.start_index|add:forloop.counter0 }}</td>
+                        <td>{{ product.date_created|date:"Y-m-d H:i:s" }}</td>
+                        <td>{{ product.job_order }}</td>
+                        <td>
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="Product Image" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                            {% else %}
+                                <span class="text-muted">No image</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.organization_name }}</td>
+                        <td>{{ product.address }}</td>
+                        <td>{{ product.contact_number }}</td>
+                        <td>{{ product.print_product }}</td>
+                        <td>{{ product.colors }}</td>
+                        <td>{{ product.order_info }}</td>
+                        <td>{{ product.size }}</td>
+                        <td>{{ product.micron }}</td>
+                        <td>{{ product.job_title }}</td>
+                        <td>{{ product.formatted_price }}</td>
+                        <td>{{ product.order_quantity }}</td>
+                        <td>{{ product.formatted_total }}</td>
+                        <td>{{ product.estimated_delivery_date|date:"Y-m-d" }}</td>
+                        <td>{{ product.actual_delivery_date|date:"Y-m-d" }}</td>
+                        <td>{{ product.cycle_time }}</td>
+                        <td>{{ product.submission_id }}</td>
+                        <td id="approval-buttons-{{ product.id }}">
+                            {% if user.is_staff %}
+                                <select onchange="updateApprovalStatus({{ product.id }}, this.value)" class="form-control form-control-sm" data-product-id="{{ product.id }}">
+                                    <option value="" {% if not product.approval_status %}selected{% endif %}>Select Status</option>
+                                    <option value="approve" {% if product.approval_status == 'approve' %}selected{% endif %}>Approve</option>
+                                    <option value="pending" {% if product.approval_status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="deny" {% if product.approval_status == 'deny' %}selected{% endif %}>Deny</option>
+                                </select>
+                            {% else %}
+                                {{ product.get_approval_status_display }}
+                            {% endif %}
+                        </td>
+                        <td>{{ product.created_by.username }}</td>
+                        <td>{{ product.approved_by.username|default:"Not yet approved" }}</td>
+
+
+
+
+                        <td class="production-status-cell" onclick="event.stopPropagation();">
+                            <div class="production-status-container">
+                                <textarea class="form-control production-status"
+                                        data-product-id="{{ product.id }}"
+                                        rows="2"
+                                        placeholder="Enter production status...">{{ product.production_status }}</textarea>
+                                <button class="btn btn-primary btn-sm mt-2 save-status-btn"
+                                        data-product-id="{{ product.id }}">
+                                    Save Status
+                                </button>
+                                <small class="text-muted d-block mt-1">
+                                    {% if product.production_status_date %}
+                                        Last updated: {{ product.production_status_date|date:"Y-m-d H:i:s" }}
+                                        <br>
+                                        Updated by: {{ product.updated_by.username|default:"Unknown" }}
+                                    {% else %}
+                                        Not updated yet
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </td>
+
+
+
+
+                       <td class="no-click">
+                    <a class="btn btn-primary btn-sm mr-2" href="{% url 'product-view' product.job_order %}">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <a class="btn btn-info btn-sm mr-2" href="{% url 'dashboard-products-edit' product.id %}">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a class="btn btn-danger btn-sm" href="{% url 'dashboard-products-delete' product.id %}">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </td>
+
+
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+
+
+
+
+            <!-- Add after your table -->
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if products.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in products.paginator.page_range %}
+                        <li class="page-item {% if products.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ products.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+
+            
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Price and quantity calculation
+    const priceInput = document.getElementById('id_price');
+    const quantityInput = document.getElementById('id_order_quantity');
+    const totalInput = document.getElementById('id_total');
+
+    function calculateTotal() {
+        const price = parseFloat(priceInput.value) || 0;
+        const quantity = parseInt(quantityInput.value) || 0;
+        const total = price * quantity;
+        totalInput.value = total.toFixed(2);
+        totalInput.dispatchEvent(new Event('change'));
+    }
+
+    if (priceInput && quantityInput && totalInput) {
+        priceInput.addEventListener('input', calculateTotal);
+        quantityInput.addEventListener('input', calculateTotal);
+        calculateTotal();
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (parseFloat(totalInput.value) === 0) {
+                event.preventDefault();
+                alert('Total cannot be zero. Please enter valid price and quantity.');
+            }
+        });
+    }
+
+    // Row click handler
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (!e.target.closest('button, input, select, textarea, .production-status-cell, .btn, a')) {
+                const productId = this.getAttribute('data-product-id');
+                if (productId) {
+                    window.location.href = `/dashboard/products/edit/${productId}`;
+                }
+            }
+        });
+    });
+
+    // Production Status Update Handler
+    document.querySelectorAll('.save-status-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const container = this.closest('.production-status-container');
+            const textarea = container.querySelector('.production-status');
+            const productId = textarea.dataset.productId;
+            const statusText = textarea.value;
+            const timestamp = container.querySelector('small');
+            
+            button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+            button.disabled = true;
+            textarea.disabled = true;
+            
+            fetch('{% url "update-production-status" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_id=${productId}&status=${encodeURIComponent(statusText)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Update response:', data);
+                if (data.status === 'success') {
+                    button.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-success');
+                    textarea.value = statusText;
+                    
+                    const updatedByText = data.updated_by ? `Updated by: ${data.updated_by}` : 'Updated by: System';
+                    timestamp.innerHTML = `Last updated: ${data.date}<br>${updatedByText}`;
+                    
+                    timestamp.classList.add('text-success');
+                    textarea.style.backgroundColor = '#e8f0fe';
+                    
+                    setTimeout(() => {
+                        button.innerHTML = 'Save Status';
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-primary');
+                        button.disabled = false;
+                        textarea.disabled = false;
+                        textarea.style.backgroundColor = '';
+                        timestamp.classList.remove('text-success');
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-danger');
+                textarea.disabled = false;
+                button.disabled = false;
+                timestamp.classList.add('text-danger');
+                
+                setTimeout(() => {
+                    button.innerHTML = 'Save Status';
+                    button.classList.remove('btn-danger');
+                    button.classList.add('btn-primary');
+                    timestamp.classList.remove('text-danger');
+                }, 2000);
+            });
+        });
+    });
+
+    // Quick save with Enter key
+    document.querySelectorAll('.production-status').forEach(textarea => {
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const saveButton = this.closest('.production-status-container').querySelector('.save-status-btn');
+                if (!saveButton.disabled) {
+                    saveButton.click();
+                }
+            }
+        });
+
+        // Auto-resize textarea
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+
+    // Add hover effect for better UX
+    const style = document.createElement('style');
+    style.textContent = `
+        .clickable-row:hover td:not(.no-click) {
+            background-color: rgba(0,123,255,0.1);
+            transition: background-color 0.2s;
+        }
+        .clickable-row {
+            cursor: pointer;
+        }
+        .no-click {
+            cursor: default;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+
+
+
+{% endblock %}

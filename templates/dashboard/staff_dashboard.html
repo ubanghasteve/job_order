@@ -1,0 +1,60 @@
+{% extends 'partials/base.html' %}
+{% block title %}Staff Dashboard{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Leaves</h5>
+                    <h2>{{ pending_leaves }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Approved Leaves</h5>
+                    <h2>{{ approved_leaves }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Rejected Leaves</h5>
+                    <h2>{{ rejected_leaves }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            Recent Leave Requests
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Dates</th>
+                        <th>Status</th>
+                        <th>HR Response</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in recent_leaves %}
+                    <tr>
+                        <td>{{ leave.leave_type }}</td>
+                        <td>{{ leave.start_date }} - {{ leave.end_date }}</td>
+                        <td>{{ leave.status }}</td>
+                         <td>{{ leave.response_message|default:"No response yet" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

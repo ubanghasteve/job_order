@@ -1,0 +1,205 @@
+{% extends 'partials/base.html' %}
+{% block title %}Admin Leave Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tachometer-alt"></i> Leave Management Dashboard</h2>
+        <div>
+            <a href="{% url 'manage-leaves' %}" class="btn btn-primary">
+                <i class="fas fa-list"></i> View All Leaves
+            </a>
+            <a href="{% url 'export-all-leaves-pdf' %}" class="btn btn-success">
+                <i class="fas fa-file-pdf"></i> Export Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title mb-0">Total Leaves</h5>
+                            <h2 class="mt-2 mb-0">{{ total_leaves }}</h2>
+                        </div>
+                        <i class="fas fa-calendar fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title mb-0">Pending</h5>
+                            <h2 class="mt-2 mb-0">{{ pending_leaves }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title mb-0">Approved</h5>
+                            <h2 class="mt-2 mb-0">{{ approved_leaves }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title mb-0">Rejected</h5>
+                            <h2 class="mt-2 mb-0">{{ rejected_leaves }}</h2>
+                        </div>
+                        <i class="fas fa-times-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Tables -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Leave Types Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="leaveTypesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Recent Pending Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Type</th>
+                                    <th>Duration</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for leave in recent_requests %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-user-circle"></i>
+                                        {{ leave.user.get_full_name|default:leave.user.username }}
+                                    </td>
+                                    <td><span class="badge bg-info">{{ leave.leave_type }}</span></td>
+                                    <td>{{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d" }}</td>
+                                    <td>
+                                        <a href="{% url 'update-leave-status' leave.id %}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i> Review
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No pending requests</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('leaveTypesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                'Annual', 
+                'Sick', 
+                'Personal', 
+                'Maternity', 
+                'Paternity', 
+                'Parental', 
+                'Bereavement', 
+                'Compassionate', 
+                'Study', 
+                'Sabbatical', 
+                'Unpaid', 
+                'Jury Duty', 
+                'Military', 
+                'Public Service', 
+                'Religious', 
+                'Casual', 
+                'Compensatory', 
+                'Medical', 
+                'Marriage', 
+                'Voting', 
+                'Emergency', 
+                'Other'
+            ],
+            datasets: [{
+                data: [
+                    {{ leave_by_type.Annual }},
+                    {{ leave_by_type.Sick }},
+                    {{ leave_by_type.Personal }},
+                    {{ leave_by_type.Maternity }},
+                    {{ leave_by_type.Paternity }},
+                    {{ leave_by_type.Parental }},
+                    {{ leave_by_type.Bereavement }},
+                    {{ leave_by_type.Compassionate }},
+                    {{ leave_by_type.Study }},
+                    {{ leave_by_type.Sabbatical }},
+                    {{ leave_by_type.Unpaid }},
+                    {{ leave_by_type.Jury_Duty }},
+                    {{ leave_by_type.Military }},
+                    {{ leave_by_type.Public_Service }},
+                    {{ leave_by_type.Religious }},
+                    {{ leave_by_type.Casual }},
+                    {{ leave_by_type.Compensatory }},
+                    {{ leave_by_type.Medical }},
+                    {{ leave_by_type.Marriage }},
+                    {{ leave_by_type.Voting }},
+                    {{ leave_by_type.Emergency }},
+                    {{ leave_by_type.Other }}
+                ],
+                backgroundColor: ['#36a2eb', '#ff6384', '#ffcd56', '#4bc0c0'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

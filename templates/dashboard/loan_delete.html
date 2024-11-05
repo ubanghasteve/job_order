@@ -1,0 +1,147 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block custom_css %}
+<style>
+    .delete-card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .delete-card .card-header {
+        background-color: #dc3545;
+        padding: 1.25rem;
+        border-bottom: none;
+    }
+
+    .delete-card .card-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #ffffff;
+    }
+
+    .delete-card .card-body {
+        padding: 2rem;
+    }
+
+    .delete-card p {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+
+    .delete-card .loan-details {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+    }
+
+    .delete-card .loan-details p {
+        margin: 0.5rem 0;
+        font-size: 0.95rem;
+    }
+
+    .btn-group-delete {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-delete-confirm {
+        min-width: 120px;
+        font-weight: 500;
+    }
+
+    .btn-delete-cancel {
+        min-width: 120px;
+        background-color: #6c757d;
+        border-color: #6c757d;
+        font-weight: 500;
+    }
+
+    .btn-delete-cancel:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row my-4">
+    <div class="col-md-6 offset-md-3">
+        <div class="card delete-card">
+            <div class="card-header">
+                <h3><i class="fas fa-exclamation-triangle mr-2"></i>Delete Loan Application</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-danger font-weight-bold">Warning: This action cannot be undone.</p>
+                
+                <div class="loan-details">
+                    <p><strong>Applicant:</strong> {{ loan.user.username }}</p>
+                    <p><strong>Loan Type:</strong> {{ loan.get_loan_type_display }}</p>
+                    <p><strong>Amount:</strong> ${{ loan.amount }}</p>
+                    <p><strong>Applied Date:</strong> {{ loan.applied_date|date:"d-m-Y" }}</p>
+                </div>
+
+                <p>Are you sure you want to delete this loan application?</p>
+
+                <form method="POST" id="deleteLoanForm">
+                    {% csrf_token %}
+                    <div class="btn-group-delete">
+                        <a class="btn btn-secondary btn-delete-cancel" href="{% url 'loan-list' %}">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-delete-confirm">
+                            <i class="fas fa-trash-alt mr-2"></i>Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteLoanForm');
+    
+    deleteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        Swal.fire({
+            title: 'Confirm Deletion',
+            text: 'Are you absolutely sure you want to delete this loan application?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteForm.submit();
+            }
+        });
+    });
+
+    // Hover effects for buttons
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-1px)';
+            this.style.transition = 'all 0.2s';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'partials/base.html' %}
+
+{% block title %}Edit Product{% endblock %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row my-4">
+    <div class="col-md-6 offset-md-3 p-3 bg-white">
+        <h3>Edit Product: {{ form.instance.name }}</h3>
+        <hr>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="mt-3">
+                <input class="btn btn-primary" type="submit" value="Update Product">
+                <a href="{% url 'dashboard-products' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+        
+        <div class="mt-4">
+            <h4>Approval Status</h4>
+            <div id="approval-buttons-{{ form.instance.id }}">
+                {% if user.is_staff %}
+                    {% if form.instance.approval_status %}
+                        <span class="badge badge-{{ form.instance.approval_status|lower }}">{{ form.instance.approval_status|title }}</span>
+                    {% else %}
+                        <button onclick="updateApprovalStatus({{ form.instance.id }}, 'approve')" class="btn btn-success btn-sm">Approve</button>
+                        <button onclick="updateApprovalStatus({{ form.instance.id }}, 'pending')" class="btn btn-warning btn-sm">Pending</button>
+                        <button onclick="updateApprovalStatus({{ form.instance.id }}, 'deny')" class="btn btn-danger btn-sm">Deny</button>
+                    {% endif %}
+                {% else %}
+                    {{ form.instance.get_approval_status_display }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+function updateApprovalStatus(productId, action) {
+    fetch(`/product/${productId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `action=${action}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const buttonContainer = document.getElementById(`approval-buttons-${productId}`);
+            buttonContainer.innerHTML = `<span class="badge badge-${getBadgeClass(action)}">${action.charAt(0).toUpperCase() + action.slice(1)}</span>`;
+        }
+    });
+}
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function getBadgeClass(action) {
+    switch(action) {
+        case 'approve': return 'success';
+        case 'pending': return 'warning';
+        case 'deny': return 'danger';
+        default: return 'secondary';
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends 'dashboard/loan_base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}My Loan Applications{% endblock %}
+
+{% block loan_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><i class="fas fa-folder-open"></i> My Loan Applications</h3>
+                <a href="{% url 'loan-request' %}" class="btn btn-light">
+                    <i class="fas fa-plus"></i> New Application
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="loan-summary mb-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stats-card bg-info">
+                                <h4>Total Loans</h4>
+                                <h2>{{ total_loans }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card bg-warning">
+                                <h4>Pending</h4>
+                                <h2>{{ pending_loans }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card bg-success">
+                                <h4>Approved</h4>
+                                <h2>{{ approved_loans }}</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card bg-danger">
+                                <h4>Rejected</h4>
+                                <h2>{{ rejected_loans }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="myLoansTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Loan ID</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Response</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in loans %}
+                            <tr class="{% if loan.status == 'Pending' %}table-warning{% elif loan.status == 'Approved' %}table-success{% elif loan.status == 'Rejected' %}table-danger{% endif %}">
+                                <td>{{ forloop.counter }}</td>
+                                <td>#{{ loan.id }}</td>
+                                <td>{{ loan.get_loan_type_display }}</td>
+                                <td class="amount-column">₦{{ loan.amount|floatformat:2|intcomma }}</td>
+                                <td>
+                                    <span class="badge {% if loan.status == 'Pending' %}bg-warning{% elif loan.status == 'Approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ loan.status }}
+                                    </span>
+                                </td>
+                                <td>{{ loan.applied_date|date:"d-m-Y" }}</td>
+                                <td>
+                                    {% if loan.response_message %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 200px;"
+                                          data-toggle="tooltip" title="{{ loan.response_message }}">
+                                        {{ loan.response_message }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">No response yet</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'loan-detail' loan.id %}" class="btn btn-info btn-sm" 
+                                           data-toggle="tooltip" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if loan.status == 'Pending' %}
+                                        <a href="{% url 'loan-update' loan.id %}" class="btn btn-warning btn-sm"
+                                           data-toggle="tooltip" title="Edit Application">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No loan applications found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.stats-card h4 {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.stats-card h2 {
+    margin: 0.5rem 0 0;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-group .btn {
+    margin: 0 2px;
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    $('#myLoansTable').DataTable({
+        order: [[4, 'desc']],
+        pageLength: 10,
+        responsive: true
+    });
+
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% block title %}Job order{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+{% include 'partials/topside.html' %}
+
+<div class="row my-4">
+    <div class="col-md-4">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="card card-body">
+            <h5>Raise Job Order</h5>
+            <hr>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="d-flex justify-content-end mb-3">
+            <a class="btn btn-primary" href="{% url 'export-products-pdf' %}">Export to PDF</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table bg-white table-bordered" style="min-width: 1500px;">
+                <thead class="bg-info text-white sticky-top">
+                    <tr>
+                        <th scope="col">S/N</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Job Order Number</th>
+                        <th scope="col">Organization</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Contact</th>
+                        <th scope="col">Package type/ Product</th>
+                        <th scope="col">Colors</th>
+                        <th scope="col">Cutting/ Pouch Bag</th>
+                        <th scope="col">Printing Substrate/ Micron</th>
+                        <th scope="col">Sealing Type</th>
+                        <th scope="col">Delivery qty</th>
+                        <th scope="col">Price(₦)</th>
+                        <th scope="col">Order Quantity (kg)</th>
+                        <th scope="col">Total(₦)</th>
+                        <th scope="col">Est. Delivery</th>
+                        <th scope="col">Act. Delivery</th>
+                        <th scope="col">Cycle Time</th>
+                        <th scope="col">Submission ID</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in product %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ product.date_created|date:"Y-m-d H:i:s" }}</td>
+                        <td>{{ product.job_order }}</td>
+                        <td>{{ product.organization_name }}</td>
+                        <td>{{ product.address }}</td>
+                        <td>{{ product.contact_number }}</td>
+                        <td>{{ product.print_product }}</td>
+                        <td>{{ product.colors }}</td>
+                        <td>{{ product.order_info }}</td>
+                        <td>{{ product.size }}</td>
+                        <td>{{ product.micron }}</td>
+                        <td>{{ product.job_title }}</td>
+                        <td>{{ product.price }}</td>
+                        <td>{{ product.order_quantity }}</td>
+                        <td>{{ product.total }}</td>
+                        <td>{{ product.estimated_delivery_date|date:"Y-m-d" }}</td>
+                        <td>{{ product.actual_delivery_date|date:"Y-m-d" }}</td>
+                        <td>{{ product.cycle_time }}</td>
+                        <td>{{ product.submission_id }}</td>
+                        <td>
+                            <a class="btn btn-info btn-sm mr-2" href="{% url 'dashboard-products-edit' product.id %}">Edit</a>
+                            <a class="btn btn-danger btn-sm ml-2" href="{% url 'dashboard-products-delete' product.id %}">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'partials/base.html' %}
+{% block title %}Manage Leave Requests{% endblock %}
+
+{% block content %}
+{% if perms.dashboard.manage_leave %}
+<div class="container mt-4">
+    <h2>Manage Leave Requests</h2>
+
+    <div class="container mt-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" class="mb-3">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Start Date:</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">End Date:</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Leave Type:</label>
+                            <select name="leave_type" class="form-control">
+                                <option value="">All Types</option>
+                                {% for type_code, type_name in leave_types %}
+                                    <option value="{{ type_code }}" {% if request.GET.leave_type == type_code %}selected{% endif %}>
+                                        {{ type_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status:</label>
+                            <select name="status" class="form-control">
+                                <option value="">All Status</option>
+                                {% for status_code, status_name in statuses %}
+                                    <option value="{{ status_code }}" {% if request.GET.status == status_code %}selected{% endif %}>
+                                        {{ status_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-8">
+                            <input type="text" name="q" class="form-control" placeholder="Search leaves..." value="{{ request.GET.q }}">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <a href="{% url 'manage-leaves' %}" class="btn btn-secondary ml-2">Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end mb-3">
+            <a class="btn btn-primary" href="{% url 'export-all-leaves-pdf' %}">Export to PDF</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table bg-white table-bordered" style="min-width: 1000px;">
+                <thead class="bg-info text-white sticky-top">
+                    <tr>
+                        <th>S/N</th>
+                        <th>Staff</th>
+                        <th>Leave Type</th>
+                        <th>Duration</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leaves %}
+                    <tr>
+                        <td>{{ leaves.start_index|add:forloop.counter0 }}</td>
+                        <td>{{ leave.user.username }}</td>
+                        <td>{{ leave.leave_type }}</td>
+                        <td>{{ leave.start_date }} to {{ leave.end_date }}</td>
+                        <td>{{ leave.reason }}</td>
+                        <td>{{ leave.status }}</td>
+                        <td>
+                            <a href="{% url 'update-leave-status' leave.id %}" class="btn btn-primary btn-sm">Update Status</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if leaves.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.leave_type %}&leave_type={{ request.GET.leave_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ leaves.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.leave_type %}&leave_type={{ request.GET.leave_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in leaves.paginator.page_range %}
+                        <li class="page-item {% if leaves.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.leave_type %}&leave_type={{ request.GET.leave_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if leaves.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ leaves.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.leave_type %}&leave_type={{ request.GET.leave_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ leaves.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.leave_type %}&leave_type={{ request.GET.leave_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="container mt-4">
+    <div class="alert alert-danger">
+        You do not have permission to view this page. Please contact your administrator.
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .table-bordered {
+        border: 2px solid #dee2e6;
+    }
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+    .table-bordered thead th {
+        border-bottom: 2px solid #dee2e6;
+    }
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.querySelector('form');
+    const searchInput = document.querySelector('input[name="q"]');
+    
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const searchValue = searchInput.value.trim();
+        const currentUrl = new URL(window.location.href);
+        
+        if (searchValue) {
+            currentUrl.searchParams.set('q', searchValue);
+        } else {
+            currentUrl.searchParams.delete('q');
+        }
+        
+        currentUrl.searchParams.set('page', '1');
+        window.location.href = currentUrl.toString();
+    });
+
+    const resetButton = document.querySelector('.btn-secondary');
+    resetButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = this.href;
+    });
+
+    const paginationLinks = document.querySelectorAll('.pagination .page-link');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = new URL(this.href);
+            const searchParams = new URLSearchParams(window.location.search);
+            const page = url.searchParams.get('page');
+            
+            if (page) {
+                searchParams.set('page', page);
+            }
+            
+            const searchQuery = searchParams.get('q');
+            if (searchQuery) {
+                url.searchParams.set('q', searchQuery);
+            }
+            
+            window.location.href = url.toString();
+        });
+    });
+
+    const currentPage = new URLSearchParams(window.location.search).get('page') || '1';
+    document.querySelector(`.pagination .page-item a[href*="page=${currentPage}"]`)?.parentElement.classList.add('active');
+});
+</script>
+{% endblock %}

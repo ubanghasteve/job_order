@@ -1,0 +1,79 @@
+
+I want to increase my permisions from this 3 major rols(Active, Staff Status, and Superuser Status) to more permisions. Please help.
+
+
+
+Claude 3.5 Sonnet (Latest)
+Here's how to expand your permissions system beyond the default Django roles:
+
+from django.contrib.auth.models import Group, Permission
+
+# Define custom permission groups
+PERMISSION_GROUPS = [
+    'Admin',
+    'SuperAdmin', 
+    'Manager',
+    'Staff',
+    'Leave',
+    'Customer',
+    'Production',
+    'Sales',
+    'Quality Control',
+    'Inventory',
+    'Finance'
+]
+
+# Create function to set up permission groups
+def create_permission_groups():
+    for group_name in PERMISSION_GROUPS:
+        group, created = Group.objects.get_or_create(name=group_name)
+        
+        # Assign specific permissions based on group
+        if group_name == 'Production':
+            permissions = Permission.objects.filter(
+                codename__in=['add_product', 'change_product', 'view_product']
+            )
+            group.permissions.add(*permissions)
+            
+        elif group_name == 'Sales':
+            permissions = Permission.objects.filter(
+                codename__in=['add_order', 'change_order', 'view_order']
+            )
+            group.permissions.add(*permissions)
+            
+        # Add more group-specific permissions as needed
+
+Copy
+
+Apply
+
+models.py
+Then run this command to create the groups:
+
+python manage.py shell
+
+Copy
+
+Execute
+
+from dashboard.models import create_permission_groups
+create_permission_groups()
+
+Copy
+
+Apply
+
+Now you can assign users to these groups through the admin interface or programmatically:
+
+user.groups.add(Group.objects.get(name='Production'))
+
+Copy
+
+Apply
+
+This gives you a more granular permission system with role-based access control. Users can belong to multiple groups and inherit all associated permissions.
+
+
+
+Try again with different context
+Add context...

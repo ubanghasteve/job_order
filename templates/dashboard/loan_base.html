@@ -1,0 +1,194 @@
+{% extends 'partials/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block custom_css %}
+<!-- External CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Custom CSS -->
+<style>
+    /* Card Styles */
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+        padding: 1rem;
+    }
+
+    /* Info Groups */
+    .info-group {
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0;
+    }
+
+    .info-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 0.9rem;
+    }
+
+    .info-group p {
+        font-size: 1rem;
+        margin-bottom: 0;
+        color: #212529;
+    }
+
+    /* Badges */
+    .badge-lg {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        min-width: 85px;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+
+    /* Content Boxes */
+    .reason-box {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        margin-top: 0.5rem;
+    }
+
+    /* Table Styles */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,123,255,0.075);
+        cursor: pointer;
+    }
+
+    .amount-column {
+        font-family: 'Courier New', monospace;
+        text-align: right;
+        font-weight: 600;
+    }
+
+    /* Button Groups */
+    .btn-group .btn {
+        margin: 0 2px;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-group .btn i {
+        margin-right: 0.25rem;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        padding: 1.25rem;
+        border-radius: 0.25rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .stats-card h4 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+
+    .stats-card h2 {
+        font-size: 1.75rem;
+        margin-bottom: 0;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include 'dashboard/loan_nav.html' %}
+<div class="container-fluid py-4">
+    {% block loan_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<!-- External JavaScript -->
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- Custom JavaScript -->
+<script>
+$(document).ready(function() {
+    // DataTables Configuration
+    const loanTable = $('#loansTable').DataTable({
+        responsive: true,
+        order: [[0, "asc"]],
+        pageLength: 25,
+        language: {
+            search: "Search loans:",
+            lengthMenu: "Show _MENU_ entries per page"
+        },
+        columnDefs: [{
+            targets: 'amount-column',
+            render: function(data, type, row) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(data);
+            }
+        }]
+    });
+
+    // Form Validation
+    $('#loanForm').on('submit', function(e) {
+        const amount = parseFloat($('#id_amount').val());
+        const startDate = new Date($('#id_start_date').val());
+        const endDate = new Date($('#id_end_date').val());
+
+        if (endDate <= startDate) {
+            e.preventDefault();
+            alert('End date must be after start date');
+            return false;
+        }
+
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Amount must be greater than 0');
+            return false;
+        }
+    });
+
+    // Status Update Confirmation
+    $('#loanResponseForm').on('submit', function(e) {
+        const status = $('select[name="status"]').val();
+        if (status === 'Rejected' && !confirm('Are you sure you want to reject this loan application?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Initialize Bootstrap Components
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Dynamic Status Badge Colors
+    $('.status-badge').each(function() {
+        const status = $(this).text().trim();
+        switch(status) {
+            case 'Pending':
+                $(this).addClass('badge-warning');
+                break;
+            case 'Approved':
+                $(this).addClass('badge-success');
+                break;
+            case 'Rejected':
+                $(this).addClass('badge-danger');
+                break;
+        }
+    });
+});
+</script>
+{% endblock %}
