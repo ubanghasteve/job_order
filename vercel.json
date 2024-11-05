@@ -1,13 +1,20 @@
 {
     "builds": [{
-      "src": "inventoryproject/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.12.1" }
+        "src": "inventoryproject/wsgi.py",
+        "use": "@vercel/python",
+        "config": { 
+            "maxLambdaSize": "15mb", 
+            "runtime": "python3.12.1" 
+        }
     }],
     "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "inventoryproject/wsgi.py"
-      }
-    ]
+        {
+            "src": "/(.*)",
+            "dest": "inventoryproject/wsgi.py"
+        }
+    ],
+    "env": {
+        "MYSQLCLIENT_CFLAGS": "-I/usr/include/mysql",
+        "MYSQLCLIENT_LDFLAGS": "-L/usr/lib/x86_64-linux-gnu -lmysqlclient"
+    }
 }
