@@ -3,35 +3,18 @@
         "src": "inventoryproject/wsgi.py",
         "use": "@vercel/python",
         "config": {
-            "maxLambdaSize": "15mb",
-            "runtime": "python3.12.1",
-            "buildCommand": "python manage.py collectstatic --noinput"
+            "maxLambdaSize": "10mb",
+            "runtime": "python3.12.1"
         }
     }],
     "routes": [
         {
             "src": "/static/(.*)",
-            "dest": "/static/$1",
-            "headers": {
-                "cache-control": "s-maxage=604800"
-            }
-        },
-        {
-            "src": "/media/(.*)",
-            "dest": "/media/$1",
-            "headers": {
-                "cache-control": "s-maxage=604800"
-            }
+            "dest": "/static/$1"
         },
         {
             "src": "/(.*)",
             "dest": "inventoryproject/wsgi.py"
         }
-    ],
-    "functions": {
-        "api/*": {
-            "memory": 512,
-            "maxDuration": 10
-        }
-    }
+    ]
 }
