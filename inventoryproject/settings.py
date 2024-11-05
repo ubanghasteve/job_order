@@ -33,7 +33,7 @@ ALLOWED_HOSTS = ['.vercel.app']
 # Application definition
 
 INSTALLED_APPS = [
-    'whitenoise.runserver_nonstatic',
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -139,11 +139,12 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 
 
-STATIC_ROOT = (BASE_DIR/"asert/")
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 LOGIN_REDIRECT_URL = 'dashboard-index'
 
