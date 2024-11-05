@@ -2,9 +2,7 @@ Django==4.2
 whitenoise==6.7.0
 django-crispy-forms==2.3
 crispy-bootstrap4==2024.10
-django-bootstrap4==24.4
 pillow==10.4.0
 reportlab==4.2.5
 psycopg2-binary==2.9.9
 xhtml2pdf==0.2.16
-django-widget-tweaks==1.5.0
