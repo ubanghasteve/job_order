@@ -13,3 +13,8 @@ django-environ==0.11.2
 xhtml2pdf==0.2.16
 pypdf==5.0.1
 html5lib==1.1
+arabic-reshaper==3.0.0
+python-bidi==0.6.0
+babel==2.14.0
+django-money==3.4.1
+django-localflavor==4.0
